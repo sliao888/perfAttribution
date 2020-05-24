@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: perfAttribution
+Version: 0.0.1
+Summary: Performance Attribution
+Home-page: UNKNOWN
+Author: sliao
+Author-email: simon.liao19@gmail.com
+License: UNKNOWN
+Description: # perfAttribution
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3.6
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown

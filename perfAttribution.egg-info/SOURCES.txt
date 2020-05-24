@@ -1,0 +1,7 @@
+README.md
+setup.py
+perfAttribution.egg-info/PKG-INFO
+perfAttribution.egg-info/SOURCES.txt
+perfAttribution.egg-info/dependency_links.txt
+perfAttribution.egg-info/requires.txt
+perfAttribution.egg-info/top_level.txt
