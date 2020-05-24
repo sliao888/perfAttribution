@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
-from functools import reduce
-    
+import os
+import openpyxl as pyxl
+from openpyxl.utils.dataframe import dataframe_to_rows
+
 
 class _baseAttribution():
     
@@ -10,8 +12,8 @@ class _baseAttribution():
 
         Args:
             date ([str]): [date for attribution]
-            fundData ([str]): [path to Fund Data csv]
-            marketData ([str]): [path to Market Data csv]
+            fundData ([str]): [path to Fund Data csv. Preset to the data saved in the module.]
+            marketData ([str]): [path to Market Data csv. Preset to the data saved in the module.]
         """
         self.date = date
         self.date_obj = pd.to_datetime(self.date)
@@ -41,7 +43,7 @@ class _baseAttribution():
         """
 
         # Sum up the PnL and market values by date and sector.
-        data = self.fundData.groupby(['Sector'])['MTD Pnl', 'Start of Month Market Value'].sum()
+        data = self.fundData.groupby(['Sector'])[['MTD Pnl', 'Start of Month Market Value']].sum()
         
         # Calculate MTD Return.
         data['MTD Return'] = data['MTD Pnl'] /  data['Start of Month Market Value']
@@ -99,25 +101,73 @@ class attribution(_baseAttribution):
 
         Returns:
             [DataFrame]: [Returns Industry MTD Attribution.]
-        """        
+        """
+
+        # Merge the fund and market data.
         data = pd.merge(self.fundDataFinal, self.marketDataFinal, how='outer',
                         left_index=True, right_index=True)
         data.fillna(0, inplace=True)
+
+        # Create attribution columns.
         data['Rel_Return'] = data['Port_MTD_Return'] - data['Market_MTD_Return']
         data['Rel_Weight'] = data['Port_Weight'] - data['Market_Weight']
+        data['Port_Contrib'] = data['Port_MTD_Return'] * data['Port_Weight']
+        data['Market_Contrib'] = data['Market_MTD_Return'] * data['Market_Weight']
+        data['Rel_Contrib'] = data['Port_Contrib'] - data['Market_Contrib']
         data['Allocation_Effect'] = data['Rel_Weight'] * data['Market_MTD_Return']
         data['Selection_Effect'] = (data['Market_Weight'] * data['Rel_Return']) + \
                                     (data['Rel_Weight'] * data['Rel_Return'])
         data['Total_Effect'] = data['Allocation_Effect'] + data['Selection_Effect']
         data = data[['Port_MTD_Return', 'Market_MTD_Return', 'Rel_Return',
                      'Port_Weight', 'Market_Weight', 'Rel_Weight',
+                     'Port_Contrib', 'Market_Contrib', 'Rel_Contrib',
                      'Allocation_Effect', 'Selection_Effect', 'Total_Effect']]
         
         return data
 
+class perfReporting(attribution):
+    def __init__(self, 
+                 date,
+                 fundDataPath = f'{os.getcwd()}\\Data\\BrinsonTask_FundData.csv',
+                 marketDataPath = f'{os.getcwd()}\\Data\\BrinsonTask_MarketData.csv'):
+        super().__init__(date, fundDataPath, marketDataPath)
+        self.user = os.getlogin()
+        self.srcPath = f'{os.getcwd()}\\Templates\\IndustryMTDAttributionTemplate.xlsx'
+        self.dstPath = f'C:\\Users\\{self.user}\\Documents\\AttributionOutput\\'
+
+    def industryMTDReport(self):
+        """[Prints Industry MTD attribution Report.]
+        """        
+
+        # Create a folder to save the report if it doesn't exist.
+        if os.path.isdir(self.dstPath) is False:
+            os.makedirs(self.dstPath)
+            print('Folder created')
+        else:
+            print('Folder already exists')
+
+        # Create the data
+        data = self.industryMTDAttribution()
+
+        # Open the Excel template.
+        wb = pyxl.load_workbook(self.srcPath)
+
+        #Print data to Excel template
+        sheet = wb['IndustryAttribution']
+        sheet['A1'] = self.date_obj
+        sheet['A1'].number_format = '[$-409]YYY-mm-dd;@'
+        rows = dataframe_to_rows(data, header=False)
+        for r_idx, row in enumerate(rows, 2):
+            for c_idx, value in enumerate(row, 1):
+                sheet.cell(row=r_idx, column=c_idx, value=value)
+        
+        # Save the Excel workbook in the folder
+        wb.save(f'{self.dstPath}Industry_MTD_Attribution_{self.date}.xlsx')
+
+
 if __name__ == '__main__':
 
-    fundDataPath = r'C:\Users\simon\Documents\Python Scripts\perfAttribution\Data\BrinsonTask_FundData.csv'
-    marketDataPath = r'C:\Users\simon\Documents\Python Scripts\perfAttribution\Data\BrinsonTask_MarketData.csv'
+    date = '2019-03-31'
 
-    test = attribution(date='2019-04-30', fundDataPath=fundDataPath, marketDataPath=marketDataPath)
+    test = perfReporting(date=date)
+    test.industryMTDReport()
