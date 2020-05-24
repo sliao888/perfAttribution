@@ -2,13 +2,16 @@ import setuptools
 
 setuptools.setup(
     
-    name="perfAttribution",
+    name="attribution",
     version="0.0.1",
+    url="https://github.com/sliao888/perfAttribution",
     author="sliao",
     author_email="simon.liao19@gmail.com",
     description="Performance Attribution",
     long_description=open("README.md").read(),
+    license='MIT',
     long_description_content_type="text/markdown",
+    include_package_data=True,
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3.6"
