@@ -128,11 +128,11 @@ class attribution(_baseAttribution):
 class perfReporting(attribution):
     def __init__(self, 
                  date,
-                 fundDataPath = f'{os.getcwd()}\\Data\\BrinsonTask_FundData.csv',
-                 marketDataPath = f'{os.getcwd()}\\Data\\BrinsonTask_MarketData.csv'):
+                 fundDataPath = f'{os.path.dirname(__file__)}\\Data\\BrinsonTask_FundData.csv',
+                 marketDataPath = f'{os.path.dirname(__file__)}\\Data\\BrinsonTask_MarketData.csv'):
         super().__init__(date, fundDataPath, marketDataPath)
         self.user = os.getlogin()
-        self.srcPath = f'{os.getcwd()}\\Templates\\IndustryMTDAttributionTemplate.xlsx'
+        self.srcPath = f'{os.path.dirname(__file__)}\\Templates\\IndustryMTDAttributionTemplate.xlsx'
         self.dstPath = f'C:\\Users\\{self.user}\\Documents\\AttributionOutput\\'
 
     def industryMTDReport(self):
@@ -162,7 +162,9 @@ class perfReporting(attribution):
                 sheet.cell(row=r_idx, column=c_idx, value=value)
         
         # Save the Excel workbook in the folder
-        wb.save(f'{self.dstPath}Industry_MTD_Attribution_{self.date}.xlsx')
+        savePath = f'{self.dstPath}Industry_MTD_Attribution_{self.date}.xlsx'
+        wb.save(savePath)
+        print(f'file saved to {savePath}')
 
 
 if __name__ == '__main__':
